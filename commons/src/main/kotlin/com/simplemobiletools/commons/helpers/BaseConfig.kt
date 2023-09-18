@@ -4,11 +4,14 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Environment
 import android.text.format.DateFormat
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.simplemobiletools.commons.R
 import com.simplemobiletools.commons.extensions.getInternalStoragePath
 import com.simplemobiletools.commons.extensions.getSDCardPath
 import com.simplemobiletools.commons.extensions.getSharedPrefs
 import com.simplemobiletools.commons.extensions.sharedPreferencesCallback
+import com.simplemobiletools.commons.models.StorageLocation
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.LinkedList
@@ -82,6 +85,10 @@ open class BaseConfig(val context: Context) {
         set(internalStoragePath) = prefs.edit().putString(INTERNAL_STORAGE_PATH, internalStoragePath).apply()
 
     private fun getDefaultInternalPath() = if (prefs.contains(INTERNAL_STORAGE_PATH)) "" else context.getInternalStoragePath()
+
+    var customStorageLocations: List<StorageLocation>
+        get() = Gson().fromJson(prefs.getString(CUSTOM_STORAGE_LOCATIONS, "[]")!!, object : TypeToken<List<StorageLocation>>(){}.type)
+        set(customStorageLocations) = prefs.edit().putString(CUSTOM_STORAGE_LOCATIONS, Gson().toJson(customStorageLocations)).apply()
 
     var textColor: Int
         get() = prefs.getInt(TEXT_COLOR, context.resources.getColor(R.color.default_text_color))

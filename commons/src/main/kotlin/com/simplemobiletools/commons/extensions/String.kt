@@ -33,6 +33,7 @@ fun String.getBasePath(context: Context): String {
         startsWith(context.internalStoragePath) -> context.internalStoragePath
         context.isPathOnSD(this) -> context.sdCardPath
         context.isPathOnOTG(this) -> context.otgPath
+        context.isPathOnCustomStorageLocation(this) -> context.getCustomStorageLocation(this).treeUri
         else -> "/"
     }
 }

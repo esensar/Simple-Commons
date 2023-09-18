@@ -1,11 +1,13 @@
 package com.simplemobiletools.commons.dialogs
 
+import android.net.Uri
 import android.os.Environment
 import android.os.Parcelable
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.simplemobiletools.commons.R
@@ -275,6 +277,7 @@ class FilePickerDialog(
                 }
             }
             activity.isPathOnOTG(path) -> activity.getOTGItems(path, showHidden, false, callback)
+            activity.isPathOnCustomStorageLocation(path) -> activity.getCustomStorageItems(path, true, false, callback)
             else -> {
                 val lastModifieds = activity.getFolderLastModifieds(path)
                 getRegularItems(path, lastModifieds, callback)

@@ -84,6 +84,7 @@ abstract class BaseSimpleActivity : AppCompatActivity() {
         var funAfterTrash30File: ((success: Boolean) -> Unit)? = null
         var funRecoverableSecurity: ((success: Boolean) -> Unit)? = null
         var funAfterManageMediaPermission: (() -> Unit)? = null
+        var funAfterNewDocumentTree: ((success: Boolean, uri: Uri?) -> Unit)? = null
     }
 
     abstract fun getAppIconIDs(): ArrayList<Int>
@@ -485,6 +486,24 @@ abstract class BaseSimpleActivity : AppCompatActivity() {
                 funAfterSdk30Action?.invoke(false)
             }
 
+        } else if (requestCode == OPEN_NEW_DOCUMENT_TREE) {
+            if (resultCode == Activity.RESULT_OK && resultData != null && resultData.data != null) {
+                val treeUri = resultData.data
+
+                if (treeUri == null) {
+                    toast(getString(R.string.wrong_folder_selected, ""))
+                    return
+                }
+
+                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                applicationContext.contentResolver.takePersistableUriPermission(treeUri, takeFlags)
+                val funAfter = funAfterNewDocumentTree
+                funAfterNewDocumentTree = null
+                funAfter?.invoke(true, treeUri)
+            } else {
+                funAfterNewDocumentTree?.invoke(false, null)
+            }
+
         } else if (requestCode == OPEN_DOCUMENT_TREE_FOR_ANDROID_DATA_OR_OBB) {
             if (resultCode == Activity.RESULT_OK && resultData != null && resultData.data != null) {
                 if (isProperAndroidRoot(checkedDocumentPath, resultData.data!!)) {
@@ -710,6 +729,18 @@ abstract class BaseSimpleActivity : AppCompatActivity() {
         } else {
             callback(true)
             false
+        }
+    }
+
+    fun handleNewDocumentTreeDialog(callback: (success: Boolean, uri: Uri?) -> Unit): Boolean {
+        hideKeyboard()
+        return if (!packageName.startsWith("com.simplemobiletools")) {
+            callback(false, null)
+            false
+        } else {
+            funAfterNewDocumentTree = callback
+            showSAFDialogSdk30()
+            true
         }
     }
 

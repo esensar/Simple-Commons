@@ -82,6 +82,7 @@ const val SD_ANDROID_OBB_TREE_URI = "sd_android_obb_tree_uri_2"
 const val OTG_TREE_URI = "otg_tree_uri_2"
 const val SD_CARD_PATH = "sd_card_path_2"
 const val OTG_REAL_PATH = "otg_real_path_2"
+const val CUSTOM_STORAGE_LOCATIONS = "custom_storage_locations"
 const val INTERNAL_STORAGE_PATH = "internal_storage_path"
 const val TEXT_COLOR = "text_color"
 const val BACKGROUND_COLOR = "background_color"
@@ -267,6 +268,7 @@ const val SELECT_EXPORT_SETTINGS_FILE_INTENT = 1006
 const val REQUEST_CODE_SET_DEFAULT_DIALER = 1007
 const val CREATE_DOCUMENT_SDK_30 = 1008
 const val REQUEST_CODE_SET_DEFAULT_CALLER_ID = 1010
+const val OPEN_NEW_DOCUMENT_TREE = 1011
 
 // sorting
 const val SORT_ORDER = "sort_order"

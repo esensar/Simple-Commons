@@ -21,6 +21,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplemobiletools.commons.R
+import com.simplemobiletools.commons.compose.extensions.config
 import com.simplemobiletools.commons.helpers.*
 import com.simplemobiletools.commons.models.FileDirItem
 import java.io.*
@@ -120,14 +121,18 @@ fun Context.getStorageDirectories(): Array<String> {
 }
 
 fun Context.getHumanReadablePath(path: String): String {
-    return getString(
-        when (path) {
-            "/" -> R.string.root
-            internalStoragePath -> R.string.internal
-            otgPath -> R.string.usb
-            else -> R.string.sd_card
-        }
-    )
+    return if (isPathOnCustomStorageLocation(path)) {
+        getCustomStorageLocation(path).name
+    } else {
+        getString(
+            when (path) {
+                "/" -> R.string.root
+                internalStoragePath -> R.string.internal
+                otgPath -> R.string.usb
+                else -> R.string.sd_card
+            }
+        )
+    }
 }
 
 fun Context.humanizePath(path: String): String {
@@ -145,6 +150,10 @@ fun Context.getInternalStoragePath() =
 fun Context.isPathOnSD(path: String) = sdCardPath.isNotEmpty() && path.startsWith(sdCardPath)
 
 fun Context.isPathOnOTG(path: String) = otgPath.isNotEmpty() && path.startsWith(otgPath)
+
+fun Context.isPathOnCustomStorageLocation(path: String) = config.customStorageLocations.any { path.startsWith(it.treeUri) }
+
+fun Context.getCustomStorageLocation(path: String) = config.customStorageLocations.first { path.startsWith(it.treeUri) }
 
 fun Context.isPathOnInternalStorage(path: String) = internalStoragePath.isNotEmpty() && path.startsWith(internalStoragePath)
 
@@ -511,6 +520,69 @@ fun Context.getOTGItems(path: String, shouldShowHidden: Boolean, getProperFileSi
         val isDirectory = file.isDirectory
         val filePath = file.uri.toString().substring(basePath.length)
         val decodedPath = otgPath + "/" + URLDecoder.decode(filePath, "UTF-8")
+        val fileSize = when {
+            getProperFileSize -> file.getItemSize(shouldShowHidden)
+            isDirectory -> 0L
+            else -> file.length()
+        }
+
+        val childrenCount = if (isDirectory) {
+            file.listFiles().size
+        } else {
+            0
+        }
+
+        val lastModified = file.lastModified()
+        val fileDirItem = FileDirItem(decodedPath, name, isDirectory, childrenCount, fileSize, lastModified)
+        items.add(fileDirItem)
+    }
+
+    callback(items)
+}
+
+fun Context.getCustomStorageItems(path: String, shouldShowHidden: Boolean, getProperFileSize: Boolean, callback: (ArrayList<FileDirItem>) -> Unit) {
+    val items = ArrayList<FileDirItem>()
+    val customStoragePath = config.customStorageLocations.first { path.startsWith(it.treeUri) }.treeUri
+    var rootUri = try {
+        DocumentFile.fromTreeUri(applicationContext, Uri.parse(customStoragePath))
+    } catch (e: Exception) {
+        showErrorToast(e)
+        null
+    }
+
+    if (rootUri == null) {
+        callback(items)
+        return
+    }
+
+    val parts = path.split("/").dropLastWhile { it.isEmpty() }
+    for (part in parts) {
+        if (path == customStoragePath) {
+            break
+        }
+
+        if (part == "otg:" || part == "") {
+            continue
+        }
+
+        val file = rootUri!!.findFile(part)
+        if (file != null) {
+            rootUri = file
+        }
+    }
+
+    val files = rootUri!!.listFiles().filter { it.exists() }
+
+    val basePath = "${customStoragePath}/document"
+    for (file in files) {
+        val name = file.name ?: continue
+        if (!shouldShowHidden && name.startsWith(".")) {
+            continue
+        }
+
+        val isDirectory = file.isDirectory
+        val filePath = file.uri.toString().substring(basePath.length)
+        val decodedPath = customStoragePath + "/" + URLDecoder.decode(filePath, "UTF-8")
         val fileSize = when {
             getProperFileSize -> file.getItemSize(shouldShowHidden)
             isDirectory -> 0L

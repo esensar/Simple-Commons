@@ -17,7 +17,7 @@ class WritePermissionDialog(activity: Activity, val mode: Mode, val callback: ()
     sealed class Mode {
         object Otg : Mode()
         object SdCard : Mode()
-        data class OpenDocumentTreeSDK30(val path: String) : Mode()
+        data class OpenDocumentTreeSDK30(val path: String? = null) : Mode()
         object CreateDocumentSDK30 : Mode()
     }
 
@@ -48,7 +48,7 @@ class WritePermissionDialog(activity: Activity, val mode: Mode, val callback: ()
 
             is Mode.OpenDocumentTreeSDK30 -> {
                 dialogTitle = R.string.confirm_folder_access_title
-                val humanizedPath = activity.humanizePath(mode.path)
+                val humanizedPath = mode.path?.let(activity::humanizePath) ?: activity.getString(R.string.storage)
                 otgView.writePermissionsDialogOtgText.text =
                     Html.fromHtml(activity.getString(R.string.confirm_storage_access_android_text_specific, humanizedPath))
                 glide.load(R.drawable.img_write_storage_sdk_30).transition(crossFade).into(otgView.writePermissionsDialogOtgImage)
@@ -76,7 +76,7 @@ class WritePermissionDialog(activity: Activity, val mode: Mode, val callback: ()
                 BaseSimpleActivity.funAfterSAFPermission = null
             }
             .apply {
-                activity.setupDialogStuff(if (mode == Mode.Otg) otgView.root else sdCardView.root, this, dialogTitle) { alertDialog ->
+                activity.setupDialogStuff(if (mode == Mode.SdCard) sdCardView.root else otgView.root, this, dialogTitle) { alertDialog ->
                     dialog = alertDialog
                 }
             }

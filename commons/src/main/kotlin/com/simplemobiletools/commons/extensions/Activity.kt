@@ -143,18 +143,20 @@ fun BaseSimpleActivity.isShowingSAFDialog(path: String): Boolean {
 }
 
 @SuppressLint("InlinedApi")
-fun BaseSimpleActivity.isShowingSAFDialogSdk30(path: String): Boolean {
-    return if (isAccessibleWithSAFSdk30(path) && !hasProperStoredFirstParentUri(path)) {
+fun BaseSimpleActivity.isShowingSAFDialogSdk30(path: String? = null): Boolean {
+    return if (path == null || isAccessibleWithSAFSdk30(path) && !hasProperStoredFirstParentUri(path)) {
         runOnUiThread {
             if (!isDestroyed && !isFinishing) {
-                val level = getFirstParentLevel(path)
-                WritePermissionDialog(this, Mode.OpenDocumentTreeSDK30(path.getFirstParentPath(this, level))) {
+                val level = path?.let(::getFirstParentLevel)
+                WritePermissionDialog(this, Mode.OpenDocumentTreeSDK30(path?.getFirstParentPath(this, level ?: 0))) {
                     Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                         putExtra(EXTRA_SHOW_ADVANCED, true)
-                        putExtra(DocumentsContract.EXTRA_INITIAL_URI, createFirstParentTreeUriUsingRootTree(path))
+                        if (path != null) {
+                            putExtra(DocumentsContract.EXTRA_INITIAL_URI, createFirstParentTreeUriUsingRootTree(path))
+                        }
                         try {
                             startActivityForResult(this, OPEN_DOCUMENT_TREE_FOR_SDK_30)
-                            checkedDocumentPath = path
+                            checkedDocumentPath = path ?: ""
                             return@apply
                         } catch (e: Exception) {
                             type = "*/*"
@@ -162,7 +164,7 @@ fun BaseSimpleActivity.isShowingSAFDialogSdk30(path: String): Boolean {
 
                         try {
                             startActivityForResult(this, OPEN_DOCUMENT_TREE_FOR_SDK_30)
-                            checkedDocumentPath = path
+                            checkedDocumentPath = path ?: ""
                         } catch (e: ActivityNotFoundException) {
                             toast(R.string.system_service_disabled, Toast.LENGTH_LONG)
                         } catch (e: Exception) {
@@ -175,6 +177,33 @@ fun BaseSimpleActivity.isShowingSAFDialogSdk30(path: String): Boolean {
         true
     } else {
         false
+    }
+}
+
+@SuppressLint("InlinedApi")
+fun BaseSimpleActivity.showSAFDialogSdk30() {
+    runOnUiThread {
+        if (!isDestroyed && !isFinishing) {
+            WritePermissionDialog(this, Mode.OpenDocumentTreeSDK30(null)) {
+                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                    putExtra(EXTRA_SHOW_ADVANCED, true)
+                    try {
+                        startActivityForResult(this, OPEN_NEW_DOCUMENT_TREE)
+                        return@apply
+                    } catch (e: Exception) {
+                        type = "*/*"
+                    }
+
+                    try {
+                        startActivityForResult(this, OPEN_NEW_DOCUMENT_TREE)
+                    } catch (e: ActivityNotFoundException) {
+                        toast(R.string.system_service_disabled, Toast.LENGTH_LONG)
+                    } catch (e: Exception) {
+                        toast(R.string.unknown_error_occurred)
+                    }
+                }
+            }
+        }
     }
 }
 
