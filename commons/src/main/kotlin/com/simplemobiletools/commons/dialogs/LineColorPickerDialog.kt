@@ -24,6 +24,7 @@ import androidx.core.view.updateLayoutParams
 import com.google.android.material.appbar.MaterialToolbar
 import com.simplemobiletools.commons.R
 import com.simplemobiletools.commons.activities.BaseSimpleActivity
+import com.simplemobiletools.commons.compose.alert_dialog.AlertDialogButtons
 import com.simplemobiletools.commons.compose.alert_dialog.AlertDialogState
 import com.simplemobiletools.commons.compose.alert_dialog.rememberAlertDialogState
 import com.simplemobiletools.commons.compose.extensions.MyDevices
@@ -246,28 +247,22 @@ fun LineColorPickerAlertDialog(
                 secondaryLineColorPicker.listener = LineColorPickerListener { _, color -> colorUpdated(color) }
             }
 
-            Row(
-                Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = {
-                    alertDialogState.hide()
-                    onButtonPressed(false, 0)
-                }) {
-                    Text(text = stringResource(id = R.string.cancel))
-                }
-                TextButton(onClick = {
+            AlertDialogButtons(
+                positiveButton = stringResource(id = R.string.ok),
+                onPositivePressed = {
                     if (dialogLineColorPickerBinding != null) {
                         val targetView =
                             if (isPrimaryColorPicker) dialogLineColorPickerBinding!!.secondaryLineColorPicker else dialogLineColorPickerBinding!!.primaryLineColorPicker
                         onButtonPressed(true, targetView.getCurrentColor())
                     }
                     alertDialogState.hide()
-
-                }) {
-                    Text(text = stringResource(id = R.string.ok))
+                },
+                negativeButton = stringResource(id = R.string.cancel),
+                onNegativePressed = {
+                    alertDialogState.hide()
+                    onButtonPressed(false, 0)
                 }
-            }
+            )
         }
     }
 
