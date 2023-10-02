@@ -26,7 +26,7 @@ fun AlertDialogButtons(
             }
         }
         TextButton(onClick = onPositivePressed) {
-            Text(text = positiveButton))
+            Text(text = positiveButton)
         }
     }
 }
