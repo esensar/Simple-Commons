@@ -348,6 +348,8 @@ open class BaseConfig(val context: Context) {
         get() = prefs.getString(YOUR_ALARM_SOUNDS, "")!!
         set(yourAlarmSounds) = prefs.edit().putString(YOUR_ALARM_SOUNDS, yourAlarmSounds).apply()
 
+    val yourAlarmSoundsFlow = ::yourAlarmSounds.asFlowNonNull()
+
     var isUsingModifiedAppIcon: Boolean
         get() = prefs.getBoolean(IS_USING_MODIFIED_APP_ICON, false)
         set(isUsingModifiedAppIcon) = prefs.edit().putBoolean(IS_USING_MODIFIED_APP_ICON, isUsingModifiedAppIcon).apply()

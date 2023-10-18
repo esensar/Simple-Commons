@@ -1,20 +1,25 @@
 package com.simplemobiletools.commons.samples.activities
 
+import android.Manifest
+import android.media.RingtoneManager
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.simplemobiletools.commons.R
 import com.simplemobiletools.commons.compose.alert_dialog.AlertDialogState
 import com.simplemobiletools.commons.compose.alert_dialog.rememberAlertDialogState
@@ -67,6 +72,7 @@ class TestDialogActivity : ComponentActivity() {
                     ShowButton(getChooserBottomSheetDialogState(), text = "Bottom sheet chooser")
                     ShowButton(getFileConflictAlertDialogState(), text = "File conflict")
                     ShowButton(getCustomIntervalPickerAlertDialogState(), text = "Custom interval picker")
+                    ShowButton(getSelectAlarmSoundAlertDialogState(), text = "Select alarm sound")
                     Spacer(modifier = Modifier.padding(bottom = 16.dp))
                 }
             }
@@ -342,6 +348,43 @@ class TestDialogActivity : ComponentActivity() {
                     alertDialogState = this,
                     text = "Test permission"
                 ) {}
+            }
+        }
+
+    @Composable
+    private fun getSelectAlarmSoundAlertDialogState() =
+        rememberAlertDialogState().apply {
+            DialogMember {
+                val token = object : TypeToken<ArrayList<AlarmSound>>() {}.type
+                val yourAlarmSounds = Gson().fromJson<ArrayList<AlarmSound>>(config.yourAlarmSounds, token) ?: ArrayList()
+                yourAlarmSounds.add(AlarmSound(-2, getString(R.string.add_new_sound), ""))
+
+                var resultHandler by remember { mutableStateOf<(Boolean) -> Unit>({}) }
+                val storagePermissionHandler = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission(),
+                    onResult = resultHandler
+                )
+
+                var systemSounds by remember { mutableStateOf<List<AlarmSound>>(emptyList()) }
+                getAlarmSounds(
+                    RingtoneManager.TYPE_ALL,
+                    callback = {
+                        systemSounds = it
+                    },
+                    handleStoragePermission = {
+                        resultHandler = it
+                        storagePermissionHandler.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    }
+                )
+                SelectAlarmSoundAlertDialog(
+                    alertDialogState = this,
+                    preselectedAlarm = -1,
+                    yourAlarms = yourAlarmSounds,
+                    systemAlarms = systemSounds,
+                    onAlarmChecked = {},
+                    onAlarmPicked = {},
+                    onAlarmSoundDeleteRequested = {}
+                )
             }
         }
 

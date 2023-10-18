@@ -43,6 +43,7 @@ import com.github.ajalt.reprint.core.Reprint
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.simplemobiletools.commons.R
+import com.simplemobiletools.commons.activities.BaseSimpleActivity
 import com.simplemobiletools.commons.helpers.*
 import com.simplemobiletools.commons.models.AlarmSound
 import com.simplemobiletools.commons.models.BlockedNumber
@@ -1238,5 +1239,48 @@ fun Context.openFullScreenIntentSettings(appId: String) {
         val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT)
         intent.data = uri
         startActivity(intent)
+    }
+}
+fun Context.getAlarmSounds(
+    type: Int,
+    callback: (ArrayList<AlarmSound>) -> Unit,
+    handleStoragePermission: ((Boolean) -> Unit) -> Unit
+) {
+    val alarms = ArrayList<AlarmSound>()
+    val manager = RingtoneManager(this)
+    manager.setType(type)
+
+    try {
+        val cursor = manager.cursor
+        var curId = 1
+        val silentAlarm = AlarmSound(curId++, getString(R.string.no_sound), SILENT)
+        alarms.add(silentAlarm)
+
+        while (cursor.moveToNext()) {
+            val title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)
+            var uri = cursor.getString(RingtoneManager.URI_COLUMN_INDEX)
+            val id = cursor.getString(RingtoneManager.ID_COLUMN_INDEX)
+            if (!uri.endsWith(id)) {
+                uri += "/$id"
+            }
+
+            val alarmSound = AlarmSound(curId++, title, uri)
+            alarms.add(alarmSound)
+        }
+        callback(alarms)
+    } catch (e: Exception) {
+        if (e is SecurityException) {
+            handleStoragePermission {
+                if (it) {
+                    getAlarmSounds(type, callback, {})
+                } else {
+                    showErrorToast(e)
+                    callback(ArrayList())
+                }
+            }
+        } else {
+            showErrorToast(e)
+            callback(ArrayList())
+        }
     }
 }

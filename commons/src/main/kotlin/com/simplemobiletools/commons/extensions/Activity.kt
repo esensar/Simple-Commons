@@ -1561,43 +1561,7 @@ fun Activity.showPickSecondsDialog(
 }
 
 fun BaseSimpleActivity.getAlarmSounds(type: Int, callback: (ArrayList<AlarmSound>) -> Unit) {
-    val alarms = ArrayList<AlarmSound>()
-    val manager = RingtoneManager(this)
-    manager.setType(type)
-
-    try {
-        val cursor = manager.cursor
-        var curId = 1
-        val silentAlarm = AlarmSound(curId++, getString(R.string.no_sound), SILENT)
-        alarms.add(silentAlarm)
-
-        while (cursor.moveToNext()) {
-            val title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)
-            var uri = cursor.getString(RingtoneManager.URI_COLUMN_INDEX)
-            val id = cursor.getString(RingtoneManager.ID_COLUMN_INDEX)
-            if (!uri.endsWith(id)) {
-                uri += "/$id"
-            }
-
-            val alarmSound = AlarmSound(curId++, title, uri)
-            alarms.add(alarmSound)
-        }
-        callback(alarms)
-    } catch (e: Exception) {
-        if (e is SecurityException) {
-            handlePermission(PERMISSION_READ_STORAGE) {
-                if (it) {
-                    getAlarmSounds(type, callback)
-                } else {
-                    showErrorToast(e)
-                    callback(ArrayList())
-                }
-            }
-        } else {
-            showErrorToast(e)
-            callback(ArrayList())
-        }
-    }
+    getAlarmSounds(type, callback) { handlePermission(PERMISSION_READ_STORAGE, it) }
 }
 
 fun Activity.checkAppSideloading(): Boolean {
